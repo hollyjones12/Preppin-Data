@@ -1,32 +1,32 @@
-with CTE as(
-select 
-split_part(transaction_code,'-',1) as Bank
-,monthname(date(transaction_date, 'DD/MM/YYYY HH:MI:SS')) as Transaction_Month
-,sum(value) as total_value
-,rank() over (partition by Transaction_Month order by total_value DESC) as Rnk
-from pd2023_wk01
-group by 1,2
+WITH CTE AS(
+SELECT
+SPLIT_PART(transaction_code,'-',1) AS Bank
+,MONTHNAME(DATE(transaction_date, 'DD/MM/YYYY HH:MI:SS')) AS Transaction_Month
+,SUM(value) as total_value
+,RANK() OVER (PARTITION BY Transaction_Month ORDER BY total_value DESC) AS Rnk
+FROM pd2023_wk01
+GROUP BY 1,2
 )
 
-,avg_rank as(
-select 
+,avg_rank AS(
+SELECT
 Bank
-,avg(Rnk) as Avg_Rank
-from CTE
-group by Bank
+,AVG(Rnk) AS Avg_Rank
+FROM CTE
+GROUP BY Bank
 )
 
-, avg_value_per_rank as (
-select 
+, avg_value_per_rank AS (
+SELECT
 Rnk
-, avg(total_value) as avg_tran_per_rank
-from CTE 
-group by Rnk
+, avg(total_value) AS avg_tran_per_rank
+FROM CTE 
+GROUP BY Rnk
 )
 
-select CTE.*
-, Avg_Rank as "Avg Rank Per Bank"
-, avg_tran_per_rank as "Avg Transaction Value Per Rank"
-from CTE
-inner join avg_rank as AR on CTE.Bank = AR.Bank
-inner join avg_value_per_rank as AV on CTE.Rnk = AV.Rnk
+SELECT CTE.*
+, Avg_Rank AS "Avg Rank Per Bank"
+, ROUND(avg_tran_per_rank,2) AS "Avg Transaction Value Per Rank"
+FROM CTE
+INNER JOIN avg_rank AS AR ON CTE.Bank = AR.Bank
+INNER JOIN avg_value_per_rank AS AV ON CTE.Rnk = AV.Rnk
